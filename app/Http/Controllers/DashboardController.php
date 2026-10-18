@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Empleado;
 use App\Models\EmpleadoDocumento;
 use App\Models\Empresa;
+use App\Models\Licencia;
 use App\Models\User;
+use App\Services\Asistencia\CalculadorAsistencia;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(CalculadorAsistencia $calculador)
     {
         $user = auth()->user();
 
@@ -54,6 +56,26 @@ class DashboardController extends Controller
             ->get()
             ->sortBy(fn ($e) => $e->fecha_ingreso->day);
 
-        return view('dashboard', compact('user', 'stats', 'cumpleanios', 'documentosAlerta', 'aniversarios'));
+        // Asistencia de hoy
+        $empleadosHoy = Empleado::activos()->where('fecha_ingreso', '<=', today()->toDateString())->get();
+        $calculo      = $calculador->calcularVarios($empleadosHoy, today(), today());
+        $asistenciaHoy = collect($calculo)
+            ->map(fn ($dias) => reset($dias)->estado)
+            ->countBy()
+            ->all();
+
+        // Licencias
+        $licenciasPendientes = Licencia::where('estado', Licencia::PENDIENTE)->count();
+        $deLicenciaHoy = Licencia::with(['empleado', 'tipo'])
+            ->aprobadas()
+            ->entre(today(), today())
+            ->get()
+            ->filter(fn ($l) => $l->empleado)
+            ->sortBy(fn ($l) => $l->empleado->apellido);
+
+        return view('dashboard', compact(
+            'user', 'stats', 'cumpleanios', 'documentosAlerta', 'aniversarios', 'asistenciaHoy',
+            'licenciasPendientes', 'deLicenciaHoy'
+        ));
     }
 }

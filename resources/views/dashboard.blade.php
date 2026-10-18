@@ -49,6 +49,67 @@
         </div>
     </div>
 
+    {{-- Asistencia de hoy --}}
+    @php
+        $presentesHoy = ($asistenciaHoy['presente'] ?? 0) + ($asistenciaHoy['trabajando'] ?? 0) + ($asistenciaHoy['tarde'] ?? 0);
+        $resumenHoy = [
+            ['Presentes', $presentesHoy, 'success', null],
+            ['Llegadas tarde', $asistenciaHoy['tarde'] ?? 0, 'warning', 'tarde'],
+            ['Ausentes', $asistenciaHoy['ausente'] ?? 0, 'danger', 'ausente'],
+            ['De licencia', $asistenciaHoy['licencia'] ?? 0, 'info', 'licencia'],
+            ['Pendientes', $asistenciaHoy['pendiente'] ?? 0, 'secondary', 'pendiente'],
+        ];
+    @endphp
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold"><i class="bi bi-clipboard-check text-primary me-1"></i>Asistencia de hoy</span>
+            <a href="{{ route('asistencia.parte') }}" class="small">Ver parte diario</a>
+        </div>
+        <div class="card-body row text-center g-2">
+            @foreach($resumenHoy as [$titulo, $valor, $color, $filtro])
+                <div class="col">
+                    <a href="{{ route('asistencia.parte', array_filter(['estado' => $filtro])) }}" class="text-decoration-none">
+                        <div class="fs-3 fw-semibold text-{{ $color === 'secondary' ? 'dark' : $color }}">{{ $valor }}</div>
+                        <div class="small text-muted">{{ $titulo }}</div>
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Licencias --}}
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <a href="{{ route('licencias.index', ['estado' => 'pendiente']) }}" class="card border-0 shadow-sm text-decoration-none h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Licencias pendientes de aprobar</div>
+                    <div class="fs-3 fw-semibold {{ $licenciasPendientes ? 'text-warning' : 'text-dark' }}">{{ $licenciasPendientes }}</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold"><i class="bi bi-calendar-heart text-info me-1"></i>De licencia hoy</span>
+                    <a href="{{ route('licencias.calendario') }}" class="small">Calendario</a>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @forelse($deLicenciaHoy as $lic)
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{{ route('empleados.show', $lic->empleado) }}#licencias" class="text-decoration-none">{{ $lic->empleado->nombre_completo }}</a>
+                            <span class="small">
+                                <span class="badge text-bg-{{ $lic->tipo->color }}">{{ $lic->tipo->nombre }}</span>
+                                <span class="text-muted">hasta el {{ $lic->fecha_hasta->format('d/m') }}</span>
+                            </span>
+                        </li>
+                    @empty
+                        <li class="list-group-item text-muted small">Nadie está de licencia hoy.</li>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-3">
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm h-100">

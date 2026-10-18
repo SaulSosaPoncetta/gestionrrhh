@@ -49,5 +49,14 @@ class DatabaseSeeder extends Seeder
 
         // Empleados de ejemplo
         $this->call(EmpleadosDemoSeeder::class);
+
+        // Horarios, feriados y fichadas de ejemplo
+        $this->call(AsistenciaDemoSeeder::class);
+
+        // Tipos de licencia de la LCT, saldos de vacaciones y licencias de ejemplo
+        $this->call(LicenciasDemoSeeder::class);
+
+        // Conceptos de liquidación y liquidaciones de ejemplo
+        $this->call(LiquidacionDemoSeeder::class);
     }
 }

@@ -50,6 +50,47 @@
                 <i class="bi bi-person-vcard me-2"></i>Legajos
             </a>
 
+            <div class="nav-title">Sueldos</div>
+            <a href="{{ route('liquidaciones.index') }}" class="nav-link {{ request()->routeIs('liquidaciones.*') ? 'active' : '' }}">
+                <i class="bi bi-cash-stack me-2"></i>Liquidaciones
+            </a>
+            <a href="{{ route('conceptos.index') }}" class="nav-link {{ request()->routeIs('conceptos.*') ? 'active' : '' }}">
+                <i class="bi bi-list-columns-reverse me-2"></i>Conceptos
+            </a>
+
+            @php($pendientesLic = \App\Models\Licencia::where('estado', 'pendiente')->count())
+            <div class="nav-title">Licencias</div>
+            <a href="{{ route('licencias.index') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('licencias.index', 'licencias.create', 'licencias.edit') ? 'active' : '' }}">
+                <i class="bi bi-calendar-heart me-2"></i>Licencias
+                @if($pendientesLic)<span class="badge rounded-pill text-bg-warning ms-auto">{{ $pendientesLic }}</span>@endif
+            </a>
+            <a href="{{ route('vacaciones.index') }}" class="nav-link {{ request()->routeIs('vacaciones.*') ? 'active' : '' }}">
+                <i class="bi bi-sun me-2"></i>Vacaciones
+            </a>
+            <a href="{{ route('licencias.calendario') }}" class="nav-link {{ request()->routeIs('licencias.calendario') ? 'active' : '' }}">
+                <i class="bi bi-calendar-week me-2"></i>Calendario
+            </a>
+            <a href="{{ route('tipos-licencia.index') }}" class="nav-link {{ request()->routeIs('tipos-licencia.*') ? 'active' : '' }}">
+                <i class="bi bi-tags me-2"></i>Tipos de licencia
+            </a>
+
+            <div class="nav-title">Asistencia</div>
+            <a href="{{ route('asistencia.parte') }}" class="nav-link {{ request()->routeIs('asistencia.parte') ? 'active' : '' }}">
+                <i class="bi bi-clipboard-check me-2"></i>Parte diario
+            </a>
+            <a href="{{ route('fichadas.index') }}" class="nav-link {{ request()->routeIs('fichadas.*') ? 'active' : '' }}">
+                <i class="bi bi-fingerprint me-2"></i>Fichadas
+            </a>
+            <a href="{{ route('asistencia.resumen') }}" class="nav-link {{ request()->routeIs('asistencia.resumen*', 'asistencia.empleado') ? 'active' : '' }}">
+                <i class="bi bi-calendar3 me-2"></i>Resumen mensual
+            </a>
+            <a href="{{ route('horarios.index') }}" class="nav-link {{ request()->routeIs('horarios.*') ? 'active' : '' }}">
+                <i class="bi bi-clock me-2"></i>Horarios
+            </a>
+            <a href="{{ route('feriados.index') }}" class="nav-link {{ request()->routeIs('feriados.*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-x me-2"></i>Feriados
+            </a>
+
             <div class="nav-title">Estructura</div>
             <a href="{{ route('areas.index') }}" class="nav-link {{ request()->routeIs('areas.*') ? 'active' : '' }}">
                 <i class="bi bi-diagram-3 me-2"></i>Áreas
@@ -107,6 +148,11 @@
         @if(session('ok'))
             <div class="alert alert-success alert-dismissible fade show">
                 {{ session('ok') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if(session('aviso'))
+            <div class="alert alert-warning alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle me-1"></i>{{ session('aviso') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
         @if(session('error'))

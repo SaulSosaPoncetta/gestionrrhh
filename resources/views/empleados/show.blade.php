@@ -42,6 +42,7 @@
 
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ route('empleados.edit', $e) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Editar</a>
+            <a href="{{ route('asistencia.empleado', $e) }}" class="btn btn-outline-primary"><i class="bi bi-calendar-check me-1"></i>Asistencia</a>
             @if($e->activo)
                 <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalBaja">
                     <i class="bi bi-person-dash me-1"></i>Dar de baja
@@ -84,6 +85,12 @@
             @if($e->documentos->contains(fn ($d) => in_array($d->estado_vencimiento, ['vencido', 'por_vencer'])))
                 <i class="bi bi-exclamation-triangle-fill text-warning"></i>
             @endif
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#licencias" type="button">
+            Licencias
+            @if($licencias->contains(fn ($l) => $l->esPendiente()))<span class="badge text-bg-warning">pend.</span>@endif
         </button>
     </li>
 </ul>
@@ -144,6 +151,15 @@
                     <dt class="col-5 fw-normal text-muted">Modalidad</dt><dd class="col-7">{{ $e->modalidad_nombre }}</dd>
                     <dt class="col-5 fw-normal text-muted">Jornada</dt>
                     <dd class="col-7">{{ $e->jornada_nombre }}@if($e->horas_semanales) · {{ rtrim(rtrim(number_format($e->horas_semanales, 2, ',', '.'), '0'), ',') }} hs/sem @endif</dd>
+                    <dt class="col-5 fw-normal text-muted">Horario</dt>
+                    <dd class="col-7">
+                        @if($e->horario)
+                            {{ $e->horario->nombre }}
+                            <div class="small text-muted">{{ $e->horario->resumen }}</div>
+                        @else
+                            <span class="text-muted">Sin horario asignado</span>
+                        @endif
+                    </dd>
                     <dt class="col-5 fw-normal text-muted">Área</dt><dd class="col-7">{!! $dato($e->area?->ruta) !!}</dd>
                     <dt class="col-5 fw-normal text-muted">Puesto</dt><dd class="col-7">{!! $dato($e->puesto?->nombre) !!}</dd>
                     <dt class="col-5 fw-normal text-muted">Supervisor</dt>
@@ -291,6 +307,67 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- LICENCIAS --}}
+    <div class="tab-pane fade" id="licencias">
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <div class="d-flex flex-wrap gap-3 align-items-center border rounded p-3 h-100">
+                    <div>
+                        <div class="small text-muted">Vacaciones {{ $periodoVacaciones }}</div>
+                        <div class="fs-3 fw-semibold {{ $saldoVacaciones['saldo'] < 0 ? 'text-danger' : 'text-success' }}">
+                            {{ $saldoVacaciones['saldo'] }} <span class="fs-6 fw-normal text-muted">días de saldo</span>
+                        </div>
+                    </div>
+                    <div class="small text-muted">
+                        Corresponden {{ $saldoVacaciones['corresponden'] }}
+                        @if($saldoVacaciones['ajuste']) · ajuste {{ $saldoVacaciones['ajuste'] > 0 ? '+' : '' }}{{ $saldoVacaciones['ajuste'] }} @endif
+                        · tomados {{ $saldoVacaciones['tomados'] }}
+                        @if($saldoVacaciones['pendientes']) · <span class="text-warning">{{ $saldoVacaciones['pendientes'] }} pendientes</span>@endif
+                        <br>Antigüedad al 31/12: {{ $saldoVacaciones['calculado']['antiguedad'] }}
+                    </div>
+                    <a href="{{ route('vacaciones.index', ['anio' => $periodoVacaciones]) }}" class="small ms-auto">Ver vacaciones</a>
+                </div>
+            </div>
+            <div class="col-md-4 d-flex align-items-center justify-content-md-end">
+                @if($e->activo)
+                    <a href="{{ route('licencias.create', ['empleado_id' => $e->id]) }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Nueva licencia</a>
+                @endif
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>Tipo</th><th>Período</th><th class="text-center">Días</th><th class="text-center">Estado</th><th class="text-end"></th></tr>
+                </thead>
+                <tbody>
+                @forelse($licencias as $lic)
+                    <tr>
+                        <td>
+                            <span class="badge text-bg-{{ $lic->tipo->color }}">{{ $lic->tipo->nombre }}</span>
+                            @if($lic->periodo)<span class="small text-muted">período {{ $lic->periodo }}</span>@endif
+                        </td>
+                        <td class="text-nowrap">{{ $lic->periodo_texto }}</td>
+                        <td class="text-center">{{ $lic->dias }}</td>
+                        <td class="text-center">
+                            <span class="badge text-bg-{{ $lic->estado_color }}">{{ $lic->estado_nombre }}</span>
+                            @if($lic->faltaCertificado())<i class="bi bi-exclamation-triangle text-warning" title="Falta el certificado"></i>@endif
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ route('licencias.edit', $lic) }}" class="btn btn-sm btn-outline-primary" title="Ver / editar"><i class="bi bi-pencil"></i></a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center text-muted py-4">No tiene licencias registradas.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($licencias->count() >= 15)
+            <a href="{{ route('licencias.index', ['empleado_id' => $e->id]) }}" class="small d-inline-block mt-2">Ver todas las licencias</a>
+        @endif
     </div>
 </div>
 

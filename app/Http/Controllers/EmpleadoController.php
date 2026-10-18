@@ -8,7 +8,9 @@ use App\Models\Convenio;
 use App\Models\Empleado;
 use App\Models\EmpleadoDocumento;
 use App\Models\EmpleadoFamiliar;
+use App\Models\Horario;
 use App\Models\Puesto;
+use App\Services\Licencias\CalculadorVacaciones;
 use App\Support\Validadores;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -78,15 +80,20 @@ class EmpleadoController extends Controller
         return redirect()->route('empleados.show', $empleado)->with('ok', 'Legajo creado correctamente.');
     }
 
-    public function show(Empleado $empleado)
+    public function show(Empleado $empleado, CalculadorVacaciones $vacaciones)
     {
-        $empleado->load(['area', 'puesto', 'convenio', 'categoria', 'supervisor', 'familiares', 'documentos.subidoPor', 'aCargo']);
+        $empleado->load(['area', 'puesto', 'convenio', 'categoria', 'horario', 'supervisor', 'familiares', 'documentos.subidoPor', 'aCargo']);
+
+        $periodo = CalculadorVacaciones::periodoActual();
 
         return view('empleados.show', [
-            'empleado'       => $empleado,
-            'parentescos'    => EmpleadoFamiliar::PARENTESCOS,
-            'tiposDocumento' => EmpleadoDocumento::TIPOS,
-            'motivosEgreso'  => Empleado::MOTIVOS_EGRESO,
+            'empleado'          => $empleado,
+            'parentescos'       => EmpleadoFamiliar::PARENTESCOS,
+            'tiposDocumento'    => EmpleadoDocumento::TIPOS,
+            'motivosEgreso'     => Empleado::MOTIVOS_EGRESO,
+            'licencias'         => $empleado->licencias()->with('tipo')->limit(15)->get(),
+            'periodoVacaciones' => $periodo,
+            'saldoVacaciones'   => $vacaciones->saldo($empleado, $periodo),
         ]);
     }
 
@@ -159,6 +166,11 @@ class EmpleadoController extends Controller
             'puestos'      => Puesto::where('activo', true)->orderBy('nombre')->get(),
             'convenios'    => Convenio::where('activo', true)->orderBy('nombre')->get(),
             'categorias'   => Categoria::where('activa', true)->orderBy('orden')->orderBy('nombre')->get(),
+            'horarios'     => Horario::where(function ($q) use ($empleado) {
+                    $q->where('activo', true)
+                      ->when($empleado->horario_id, fn ($q) => $q->orWhere('id', $empleado->horario_id));
+                })
+                ->orderBy('nombre')->get(),
             'supervisores' => Empleado::activos()
                 ->when($empleado->exists, fn ($q) => $q->where('id', '!=', $empleado->id))
                 ->orderBy('apellido')->orderBy('nombre')->get(),
@@ -215,6 +227,7 @@ class EmpleadoController extends Controller
             'modalidad'           => ['required', Rule::in(array_keys(Empleado::MODALIDADES))],
             'jornada'             => ['required', Rule::in(array_keys(Empleado::JORNADAS))],
             'horas_semanales'     => ['nullable', 'numeric', 'min:1', 'max:80'],
+            'horario_id'          => ['nullable', $existe('horarios')],
             'sueldo_basico'       => ['nullable', 'required_without:convenio_id', 'numeric', 'min:0'],
 
             'banco'               => ['nullable', 'string', 'max:255'],

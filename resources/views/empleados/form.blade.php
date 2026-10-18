@@ -162,6 +162,24 @@
                        class="form-control @error('horas_semanales') is-invalid @enderror" step="0.5" min="1" max="80">
             </div>
 
+            <div class="col-md-6">
+                <label class="form-label">Horario de trabajo</label>
+                <select name="horario_id" id="horario_id" class="form-select @error('horario_id') is-invalid @enderror">
+                    <option value="">— Sin horario asignado —</option>
+                    @foreach($horarios as $h)
+                        <option value="{{ $h->id }}" data-resumen="{{ $h->resumen }}"
+                                @selected((string) old('horario_id', $e->horario_id) === (string) $h->id)>{{ $h->nombre }}</option>
+                    @endforeach
+                </select>
+                <div class="form-text" id="horario-resumen"></div>
+            </div>
+            <div class="col-md-6 d-flex align-items-center">
+                <div class="small text-muted">
+                    El horario se usa para calcular llegadas tarde, ausencias y horas extra.
+                    Se administran en <a href="{{ route('horarios.index') }}" target="_blank">Asistencia › Horarios</a>.
+                </div>
+            </div>
+
             <div class="col-md-4">
                 <label class="form-label">Área</label>
                 <select name="area_id" id="area_id" class="form-select @error('area_id') is-invalid @enderror">
@@ -320,6 +338,13 @@
     convenio.addEventListener('change', actualizarConvenio);
     categoria.addEventListener('change', mostrarBasico);
     actualizarConvenio();
+
+    // Resumen del horario elegido
+    const horario = document.getElementById('horario_id');
+    const textoHorario = document.getElementById('horario-resumen');
+    const mostrarHorario = () => textoHorario.textContent = horario.selectedOptions[0]?.dataset.resumen ?? '';
+    horario.addEventListener('change', mostrarHorario);
+    mostrarHorario();
 })();
 </script>
 @endpush

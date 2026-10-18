@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Concepto;
 use App\Models\Empresa;
+use App\Models\Feriado;
+use App\Models\TipoLicencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -49,9 +52,14 @@ class EmpresaController extends Controller
         $datos = $this->validar($request);
         $datos['logo'] = $this->guardarLogo($request);
 
-        Empresa::create($datos);
+        $empresa = Empresa::create($datos);
 
-        return redirect()->route('empresas.index')->with('ok', 'Empresa creada correctamente.');
+        // Configuración inicial: tipos de licencia de la LCT y feriados fijos del año
+        TipoLicencia::cargarPredeterminados($empresa->id);
+        Feriado::cargarFijos($empresa->id, now()->year);
+        Concepto::cargarPredeterminados($empresa->id);
+
+        return redirect()->route('empresas.index')->with('ok', 'Empresa creada con los tipos de licencia de la LCT, los feriados fijos del año y los conceptos de liquidación.');
     }
 
     public function edit(Empresa $empresa)

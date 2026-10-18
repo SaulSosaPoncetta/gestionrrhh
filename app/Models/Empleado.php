@@ -55,7 +55,7 @@ class Empleado extends Model
         'estado_civil', 'nacionalidad', 'foto', 'domicilio', 'localidad', 'provincia', 'codigo_postal',
         'telefono', 'email', 'contacto_emergencia', 'telefono_emergencia',
         'fecha_ingreso', 'fecha_egreso', 'motivo_egreso', 'area_id', 'puesto_id', 'convenio_id',
-        'categoria_id', 'supervisor_id', 'modalidad', 'jornada', 'horas_semanales', 'sueldo_basico',
+        'categoria_id', 'supervisor_id', 'modalidad', 'jornada', 'horas_semanales', 'horario_id', 'sueldo_basico',
         'banco', 'cbu', 'obra_social', 'codigo_obra_social', 'user_id', 'observaciones',
     ];
 
@@ -75,6 +75,17 @@ class Empleado extends Model
     public function categoria()  { return $this->belongsTo(Categoria::class); }
     public function supervisor() { return $this->belongsTo(Empleado::class, 'supervisor_id'); }
     public function usuario()    { return $this->belongsTo(User::class, 'user_id'); }
+    public function horario()    { return $this->belongsTo(Horario::class); }
+
+    public function fichadas()
+    {
+        return $this->hasMany(Fichada::class)->orderBy('fecha_hora');
+    }
+
+    public function licencias()
+    {
+        return $this->hasMany(Licencia::class)->orderByDesc('fecha_desde');
+    }
 
     public function aCargo()
     {
@@ -147,7 +158,8 @@ class Empleado extends Model
         if (! $this->fecha_ingreso) {
             return 0;
         }
-        return $this->fecha_ingreso->diffInYears($this->fecha_egreso ?? Carbon::today());
+        // diff() funciona igual en Carbon 2 y 3 (diffInYears cambió en Carbon 3)
+        return $this->fecha_ingreso->diff($this->fecha_egreso ?? Carbon::today())->y;
     }
 
     /** Básico vigente: el de la categoría, o el propio si está fuera de convenio */
