@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'rol'              => \App\Http\Middleware\RolMiddleware::class,
             'empresa.activa'   => \App\Http\Middleware\EmpresaActiva::class,
             'requiere.empresa' => \App\Http\Middleware\RequiereEmpresa::class,
+            'portal'           => \App\Http\Middleware\PortalEmpleado::class,
+            'password.cambio'  => \App\Http\Middleware\CambioPasswordObligatorio::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));

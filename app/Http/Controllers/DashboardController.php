@@ -15,6 +15,11 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
+        // Empleados y supervisores usan el portal de autogestión
+        if ($user->esUsuarioPortal()) {
+            return redirect()->route('portal.inicio');
+        }
+
         if ($user->esSuperadmin()) {
             return view('dashboard', [
                 'user'  => $user,

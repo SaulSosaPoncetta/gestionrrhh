@@ -15,6 +15,7 @@ class Recibo extends Model
         'empresa_id', 'liquidacion_id', 'empleado_id', 'legajo', 'apellido_nombre', 'cuil', 'fecha_ingreso',
         'categoria', 'puesto', 'convenio', 'modalidad', 'banco', 'cbu', 'basico', 'dias_trabajados',
         'total_remunerativo', 'total_no_remunerativo', 'total_descuentos', 'neto', 'observaciones',
+        'conformado_at', 'conformado_ip',
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class Recibo extends Model
         'total_no_remunerativo' => 'float',
         'total_descuentos'      => 'float',
         'neto'                  => 'float',
+        'conformado_at'         => 'datetime',
     ];
 
     public function liquidacion() { return $this->belongsTo(Liquidacion::class); }

@@ -6,11 +6,12 @@
     <title>Ingresar · {{ config('app.name', 'Gestión RRHH') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{{ asset('css/tema.css') }}?v=1" rel="stylesheet">
     <style>
-        body { background: linear-gradient(135deg, #1e293b, #334155); min-height: 100vh; }
+        body { min-height: 100vh; }
     </style>
 </head>
-<body class="d-flex align-items-center justify-content-center p-3">
+<body class="fondo-login d-flex align-items-center justify-content-center p-3">
 <div class="card shadow border-0" style="max-width: 400px; width: 100%;">
     <div class="card-body p-4">
         <div class="text-center mb-4">

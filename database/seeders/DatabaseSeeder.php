@@ -58,5 +58,8 @@ class DatabaseSeeder extends Seeder
 
         // Conceptos de liquidación y liquidaciones de ejemplo
         $this->call(LiquidacionDemoSeeder::class);
+
+        // Usuarios del portal de autogestión
+        $this->call(PortalDemoSeeder::class);
     }
 }

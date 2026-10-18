@@ -56,7 +56,7 @@ class Empleado extends Model
         'telefono', 'email', 'contacto_emergencia', 'telefono_emergencia',
         'fecha_ingreso', 'fecha_egreso', 'motivo_egreso', 'area_id', 'puesto_id', 'convenio_id',
         'categoria_id', 'supervisor_id', 'modalidad', 'jornada', 'horas_semanales', 'horario_id', 'sueldo_basico',
-        'banco', 'cbu', 'obra_social', 'codigo_obra_social', 'user_id', 'observaciones',
+        'banco', 'cbu', 'obra_social', 'codigo_obra_social', 'user_id', 'permite_fichaje_web', 'observaciones',
     ];
 
     protected $casts = [
@@ -65,6 +65,7 @@ class Empleado extends Model
         'fecha_egreso'     => 'date',
         'horas_semanales'  => 'decimal:2',
         'sueldo_basico'    => 'decimal:2',
+        'permite_fichaje_web' => 'boolean',
     ];
 
     // ---------- Relaciones ----------

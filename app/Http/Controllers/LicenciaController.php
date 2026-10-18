@@ -7,17 +7,19 @@ use App\Models\Feriado;
 use App\Models\Licencia;
 use App\Models\TipoLicencia;
 use App\Services\Licencias\CalculadorVacaciones;
+use App\Services\Licencias\RegistroLicencias;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class LicenciaController extends Controller
 {
-    public function __construct(private CalculadorVacaciones $vacaciones)
-    {
+    public function __construct(
+        private CalculadorVacaciones $vacaciones,
+        private RegistroLicencias $registro,
+    ) {
     }
 
     public function index(Request $request)
@@ -277,77 +279,23 @@ class LicenciaController extends Controller
 
         $empleado = Empleado::with('horario')->findOrFail($request->empleado_id);
         $tipo     = TipoLicencia::findOrFail($request->tipo_licencia_id);
-        $desde    = Carbon::parse($request->fecha_desde)->startOfDay();
-        $hasta    = Carbon::parse($request->fecha_hasta)->startOfDay();
-        $errores  = [];
 
-        if ($desde->lt($empleado->fecha_ingreso)) {
-            $errores['fecha_desde'] = 'La licencia no puede empezar antes del ingreso del empleado (' . $empleado->fecha_ingreso->format('d/m/Y') . ').';
-        }
-        if ($empleado->fecha_egreso && $hasta->gt($empleado->fecha_egreso)) {
-            $errores['fecha_hasta'] = 'La licencia no puede terminar después del egreso del empleado (' . $empleado->fecha_egreso->format('d/m/Y') . ').';
-        }
-
-        $dias = $this->vacaciones->diasLicencia($tipo, $desde, $hasta, $empleado);
-
-        if ($dias < 1) {
-            $errores['fecha_hasta'] = 'El período elegido no tiene días hábiles.';
-        }
-        if ($tipo->dias_maximos && $dias > $tipo->dias_maximos) {
-            $errores['fecha_hasta'] = "«{$tipo->nombre}» permite hasta {$tipo->dias_maximos} días por licencia (elegiste {$dias}).";
-        }
-
-        // Superposición con otra licencia
-        $superpuesta = Licencia::with('tipo')
-            ->where('empleado_id', $empleado->id)
-            ->activas()
-            ->entre($desde, $hasta)
-            ->when($licencia, fn ($q) => $q->where('id', '!=', $licencia->id))
-            ->first();
-        if ($superpuesta) {
-            $errores['fecha_desde'] = "Se superpone con otra licencia ({$superpuesta->tipo->nombre}, {$superpuesta->periodo_texto}, {$superpuesta->estado_nombre}).";
-        }
-
-        // Tope anual
-        if ($tipo->maximo_anual) {
-            $usados = (int) Licencia::where('empleado_id', $empleado->id)
-                ->where('tipo_licencia_id', $tipo->id)
-                ->activas()
-                ->whereYear('fecha_desde', $desde->year)
-                ->when($licencia, fn ($q) => $q->where('id', '!=', $licencia->id))
-                ->sum('dias');
-            if ($usados + $dias > $tipo->maximo_anual) {
-                $quedan = max(0, $tipo->maximo_anual - $usados);
-                $errores['fecha_hasta'] = "«{$tipo->nombre}» tiene un tope de {$tipo->maximo_anual} días por año y ya usó {$usados} en {$desde->year} (quedan {$quedan}).";
-            }
-        }
-
-        // Saldo de vacaciones
-        $periodo = null;
-        if ($tipo->es_vacaciones) {
-            $periodo = (int) $request->input('periodo');
-            if (! $periodo) {
-                $errores['periodo'] = 'Indicá a qué año corresponden las vacaciones.';
-            } elseif (! isset($errores['fecha_hasta'])) {
-                $saldo = $this->vacaciones->saldo($empleado, $periodo, $licencia?->id);
-                if ($dias > $saldo['disponible']) {
-                    $errores['fecha_hasta'] = "Supera el saldo de vacaciones {$periodo}: le quedan {$saldo['disponible']} días y pediste {$dias}."
-                        . ' Si corresponde, ajustá el saldo en Vacaciones.';
-                }
-            }
-        }
-
-        if ($errores) {
-            throw ValidationException::withMessages($errores);
-        }
+        $r = $this->registro->validar(
+            $empleado,
+            $tipo,
+            Carbon::parse($request->fecha_desde),
+            Carbon::parse($request->fecha_hasta),
+            $request->filled('periodo') ? (int) $request->periodo : null,
+            $licencia
+        );
 
         return [
             'empleado_id'      => $empleado->id,
             'tipo_licencia_id' => $tipo->id,
-            'fecha_desde'      => $desde->toDateString(),
-            'fecha_hasta'      => $hasta->toDateString(),
-            'dias'             => $dias,
-            'periodo'          => $periodo,
+            'fecha_desde'      => Carbon::parse($request->fecha_desde)->toDateString(),
+            'fecha_hasta'      => Carbon::parse($request->fecha_hasta)->toDateString(),
+            'dias'             => $r['dias'],
+            'periodo'          => $r['periodo'],
             'observaciones'    => $request->observaciones,
         ];
     }

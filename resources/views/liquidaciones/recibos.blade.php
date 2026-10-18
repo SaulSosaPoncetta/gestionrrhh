@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Recibos · {{ $liquidacion->periodo_texto }}</title>
     <style>
-        :root { --borde: #333; --suave: #f2f2f2; }
+        :root { --borde: #333; --suave: #f6e5e8; }
         * { box-sizing: border-box; }
         body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; color: #111; margin: 0; background: #e9ecef; }
-        .barra { position: sticky; top: 0; background: #1e293b; color: #fff; padding: 10px 16px; display: flex; gap: 12px; align-items: center; z-index: 10; }
+        .barra { position: sticky; top: 0; background: #55101f; color: #fff; padding: 10px 16px; display: flex; gap: 12px; align-items: center; z-index: 10; }
         .barra button { background: #fff; border: 0; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .hoja { width: 210mm; min-height: 297mm; margin: 12px auto; background: #fff; padding: 8mm 10mm; box-shadow: 0 0 6px rgba(0,0,0,.15); }
         .recibo { border: 1px solid var(--borde); height: 136mm; display: flex; flex-direction: column; }
@@ -19,7 +19,7 @@
         .empresa img { max-height: 34px; max-width: 70px; }
         .empresa .rs { font-weight: bold; font-size: 12px; }
         .titulo { width: 52mm; border-left: 1px solid var(--borde); text-align: center; }
-        .titulo .t1 { font-weight: bold; font-size: 11px; }
+        .titulo .t1 { font-weight: bold; font-size: 11px; color: #800020; }
         .copia { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #555; }
         table { width: 100%; border-collapse: collapse; }
         .datos td { border-bottom: 1px solid var(--borde); border-right: 1px solid var(--borde); padding: 2px 5px; vertical-align: top; }

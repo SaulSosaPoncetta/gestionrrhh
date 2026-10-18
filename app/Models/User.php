@@ -22,7 +22,7 @@ class User extends Authenticatable
     ];
 
     protected $fillable = [
-        'empresa_id', 'name', 'email', 'password', 'rol', 'activo', 'ultimo_acceso',
+        'empresa_id', 'name', 'email', 'password', 'debe_cambiar_password', 'rol', 'activo', 'ultimo_acceso',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -30,10 +30,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'ultimo_acceso'     => 'datetime',
-            'password'          => 'hashed',
-            'activo'            => 'boolean',
+            'email_verified_at'     => 'datetime',
+            'ultimo_acceso'         => 'datetime',
+            'password'              => 'hashed',
+            'activo'                => 'boolean',
+            'debe_cambiar_password' => 'boolean',
         ];
     }
 
@@ -42,10 +43,22 @@ class User extends Authenticatable
         return $this->belongsTo(Empresa::class);
     }
 
+    /** Legajo vinculado (para el portal de autogestión) */
+    public function empleado()
+    {
+        return $this->hasOne(Empleado::class, 'user_id');
+    }
+
     public function esSuperadmin(): bool { return $this->rol === self::ROL_SUPERADMIN; }
     public function esAdmin(): bool      { return $this->rol === self::ROL_ADMIN; }
     public function esSupervisor(): bool { return $this->rol === self::ROL_SUPERVISOR; }
     public function esEmpleado(): bool   { return $this->rol === self::ROL_EMPLEADO; }
+
+    /** Usuarios que usan solo el portal de autogestión */
+    public function esUsuarioPortal(): bool
+    {
+        return $this->esEmpleado() || $this->esSupervisor();
+    }
 
     public function tieneRol(string ...$roles): bool
     {

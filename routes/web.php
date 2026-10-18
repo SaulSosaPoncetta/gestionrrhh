@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccesoPortalController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AsistenciaController;
 use App\Http\Controllers\Auth\LoginController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\PuestoController;
 use App\Http\Controllers\TipoLicenciaController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VacacionController;
+use App\Http\Controllers\Portal;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
@@ -29,9 +31,43 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:10,1');
 });
 
-Route::middleware(['auth', 'empresa.activa'])->group(function () {
+Route::middleware(['auth', 'empresa.activa', 'password.cambio'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Cambio de contraseña (todos los usuarios)
+    Route::get('/password', [Portal\PerfilController::class, 'editarPassword'])->name('password.editar');
+    Route::put('/password', [Portal\PerfilController::class, 'actualizarPassword'])->name('password.actualizar');
+
+    // Portal de autogestión del empleado
+    Route::prefix('mi')->name('portal.')->middleware('portal')->group(function () {
+        Route::get('/', [Portal\InicioController::class, 'index'])->name('inicio');
+        Route::post('fichar', [Portal\InicioController::class, 'fichar'])->name('fichar')->middleware('throttle:10,1');
+
+        Route::get('recibos', [Portal\RecibosController::class, 'index'])->name('recibos');
+        Route::get('recibos/{recibo}', [Portal\RecibosController::class, 'ver'])->name('recibos.ver');
+        Route::patch('recibos/{recibo}/conformar', [Portal\RecibosController::class, 'conformar'])->name('recibos.conformar');
+
+        Route::get('licencias', [Portal\LicenciasController::class, 'index'])->name('licencias');
+        Route::get('licencias/nueva', [Portal\LicenciasController::class, 'create'])->name('licencias.create');
+        Route::get('licencias/calcular-dias', [Portal\LicenciasController::class, 'calcularDias'])->name('licencias.calcular-dias');
+        Route::post('licencias', [Portal\LicenciasController::class, 'store'])->name('licencias.store');
+        Route::patch('licencias/{licencia}/cancelar', [Portal\LicenciasController::class, 'cancelar'])->name('licencias.cancelar');
+        Route::post('licencias/{licencia}/certificado', [Portal\LicenciasController::class, 'subirCertificado'])->name('licencias.certificado');
+        Route::get('licencias/{licencia}/certificado', [Portal\LicenciasController::class, 'verCertificado'])->name('licencias.certificado.ver');
+
+        Route::get('asistencia', [Portal\AsistenciaController::class, 'index'])->name('asistencia');
+
+        Route::get('datos', [Portal\PerfilController::class, 'show'])->name('datos');
+        Route::put('datos', [Portal\PerfilController::class, 'update'])->name('datos.update');
+
+        // Supervisores
+        Route::middleware('rol:supervisor')->group(function () {
+            Route::get('equipo', [Portal\EquipoController::class, 'index'])->name('equipo');
+            Route::patch('equipo/licencias/{licencia}/aprobar', [Portal\EquipoController::class, 'aprobar'])->name('equipo.aprobar');
+            Route::patch('equipo/licencias/{licencia}/rechazar', [Portal\EquipoController::class, 'rechazar'])->name('equipo.rechazar');
+        });
+    });
 
     // Solo superadmin (el middleware deja pasar siempre al superadmin)
     Route::middleware('rol:superadmin')->group(function () {
@@ -78,6 +114,12 @@ Route::middleware(['auth', 'empresa.activa'])->group(function () {
             ->name('empleados.documentos.descargar');
         Route::delete('empleados/{empleado}/documentos/{documento}', [EmpleadoDocumentoController::class, 'destroy'])
             ->name('empleados.documentos.destroy');
+
+        // Acceso al portal desde el legajo
+        Route::post('empleados/{empleado}/acceso', [AccesoPortalController::class, 'crear'])->name('empleados.acceso.crear');
+        Route::put('empleados/{empleado}/acceso', [AccesoPortalController::class, 'actualizar'])->name('empleados.acceso.actualizar');
+        Route::post('empleados/{empleado}/acceso/resetear', [AccesoPortalController::class, 'resetear'])->name('empleados.acceso.resetear');
+        Route::delete('empleados/{empleado}/acceso', [AccesoPortalController::class, 'quitar'])->name('empleados.acceso.quitar');
 
         // Asistencia
         Route::get('asistencia/parte', [AsistenciaController::class, 'parte'])->name('asistencia.parte');
@@ -129,5 +171,4 @@ Route::middleware(['auth', 'empresa.activa'])->group(function () {
         Route::delete('liquidaciones/{liquidacion}/novedades/{novedad}', [LiquidacionController::class, 'eliminarNovedad'])->name('liquidaciones.novedades.destroy');
     });
 
-    // Paso 8: portal de autogestión del empleado
 });

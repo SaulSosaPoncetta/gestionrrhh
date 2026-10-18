@@ -113,7 +113,12 @@
                     <td class="text-end font-monospace">{{ $m($r->total_remunerativo) }}</td>
                     <td class="text-end font-monospace d-none d-md-table-cell">{{ $m($r->total_no_remunerativo) }}</td>
                     <td class="text-end font-monospace d-none d-md-table-cell">{{ $m($r->total_descuentos) }}</td>
-                    <td class="text-end font-monospace fw-semibold">{{ $m($r->neto) }}</td>
+                    <td class="text-end font-monospace fw-semibold">
+                        {{ $m($r->neto) }}
+                        @if($r->conformado_at)
+                            <div class="small text-success fw-normal" title="IP {{ $r->conformado_ip }}"><i class="bi bi-check2-circle"></i> Conforme {{ $r->conformado_at->format('d/m') }}</div>
+                        @endif
+                    </td>
                     <td class="text-end text-nowrap">
                         <a href="{{ route('liquidaciones.recibo', [$l, $r]) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver recibo"><i class="bi bi-receipt"></i></a>
                         @if($l->esBorrador())

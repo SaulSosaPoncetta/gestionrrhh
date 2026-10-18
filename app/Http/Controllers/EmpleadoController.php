@@ -82,7 +82,7 @@ class EmpleadoController extends Controller
 
     public function show(Empleado $empleado, CalculadorVacaciones $vacaciones)
     {
-        $empleado->load(['area', 'puesto', 'convenio', 'categoria', 'horario', 'supervisor', 'familiares', 'documentos.subidoPor', 'aCargo']);
+        $empleado->load(['area', 'puesto', 'convenio', 'categoria', 'horario', 'supervisor', 'familiares', 'documentos.subidoPor', 'aCargo', 'usuario']);
 
         $periodo = CalculadorVacaciones::periodoActual();
 

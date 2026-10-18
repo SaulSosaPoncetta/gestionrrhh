@@ -70,6 +70,137 @@
     </div>
 </div>
 
+{{-- ACCESO AL PORTAL --}}
+@if(session('acceso'))
+    <div class="alert alert-success">
+        <div class="fw-semibold mb-1"><i class="bi bi-key me-1"></i>{{ session('acceso')['nuevo'] ? 'Acceso creado' : 'Contraseña restablecida' }}. Entregale estos datos al empleado:</div>
+        <div class="font-monospace">Usuario: {{ session('acceso')['email'] }}<br>Contraseña temporal: <strong>{{ session('acceso')['password'] }}</strong></div>
+        <div class="small mt-1">No se vuelve a mostrar. Al ingresar, el sistema le va a pedir que elija una contraseña propia.</div>
+    </div>
+@endif
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body d-flex flex-wrap gap-3 align-items-center py-2">
+        <i class="bi bi-phone fs-4 text-primary"></i>
+        @if($e->usuario)
+            <div class="flex-grow-1">
+                <div class="fw-semibold">
+                    Portal de autogestión
+                    <span class="badge {{ $e->usuario->activo ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $e->usuario->activo ? 'Activo' : 'Desactivado' }}</span>
+                    <span class="badge text-bg-light">{{ $e->usuario->rol_nombre }}</span>
+                    @if($e->permite_fichaje_web)<span class="badge text-bg-info">Ficha por web</span>@endif
+                </div>
+                <div class="small text-muted">
+                    {{ $e->usuario->email }} ·
+                    {{ $e->usuario->ultimo_acceso ? 'último ingreso ' . $e->usuario->ultimo_acceso->format('d/m/Y H:i') : 'todavía no ingresó' }}
+                    @if($e->usuario->debe_cambiar_password) · <span class="text-warning">con contraseña temporal</span>@endif
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAccesoEditar"><i class="bi bi-pencil me-1"></i>Editar</button>
+                <form method="POST" action="{{ route('empleados.acceso.resetear', $e) }}"
+                      onsubmit="return confirm('Se va a generar una contraseña temporal nueva. ¿Continuar?')">
+                    @csrf
+                    <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer contraseña</button>
+                </form>
+                <form method="POST" action="{{ route('empleados.acceso.quitar', $e) }}"
+                      onsubmit="return confirm('¿Quitar el acceso al portal? El usuario queda desactivado.')">
+                    @csrf @method('DELETE')
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-person-x me-1"></i>Quitar acceso</button>
+                </form>
+            </div>
+        @else
+            <div class="flex-grow-1">
+                <div class="fw-semibold">Portal de autogestión</div>
+                <div class="small text-muted">Sin acceso. Con el portal puede ver sus recibos, pedir licencias y consultar su asistencia.</div>
+            </div>
+            @if($e->activo)
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalAccesoCrear"><i class="bi bi-person-plus me-1"></i>Dar acceso</button>
+            @endif
+        @endif
+    </div>
+</div>
+
+@if(! $e->usuario && $e->activo)
+<div class="modal fade" id="modalAccesoCrear" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('empleados.acceso.crear', $e) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title">Dar acceso al portal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-12">
+                    <label class="form-label">Email para ingresar *</label>
+                    <input type="email" name="email" value="{{ old('email', $e->email) }}" class="form-control @error('email') is-invalid @enderror" required>
+                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Perfil</label>
+                    <select name="rol" class="form-select">
+                        <option value="empleado">Empleado</option>
+                        <option value="supervisor" @selected($e->aCargo->isNotEmpty())>Supervisor (aprueba licencias de su personal a cargo)</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" name="permite_fichaje_web" value="1" id="fichaje_web" class="form-check-input">
+                        <label for="fichaje_web" class="form-check-label">Puede fichar entrada y salida desde el portal</label>
+                    </div>
+                </div>
+                <div class="col-12 small text-muted">Se genera una contraseña temporal que vas a ver una sola vez.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary">Crear acceso</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+@if($e->usuario)
+<div class="modal fade" id="modalAccesoEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('empleados.acceso.actualizar', $e) }}" class="modal-content">
+            @csrf @method('PUT')
+            <div class="modal-header">
+                <h5 class="modal-title">Acceso al portal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-12">
+                    <label class="form-label">Email para ingresar *</label>
+                    <input type="email" name="email" value="{{ old('email', $e->usuario->email) }}" class="form-control" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Perfil</label>
+                    <select name="rol" class="form-select">
+                        <option value="empleado" @selected($e->usuario->rol === 'empleado')>Empleado</option>
+                        <option value="supervisor" @selected($e->usuario->rol === 'supervisor')>Supervisor</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" name="permite_fichaje_web" value="1" id="fichaje_web_e" class="form-check-input" @checked($e->permite_fichaje_web)>
+                        <label for="fichaje_web_e" class="form-check-label">Puede fichar desde el portal</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input type="checkbox" name="activo" value="1" id="acceso_activo" class="form-check-input" @checked($e->usuario->activo)>
+                        <label for="acceso_activo" class="form-check-label">Acceso activo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 {{-- PESTAÑAS --}}
 <ul class="nav nav-tabs" role="tablist">
     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#datos" type="button">Datos personales</button></li>
