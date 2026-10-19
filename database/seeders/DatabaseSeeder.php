@@ -10,6 +10,12 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // En producción nunca se cargan los datos de demostración
+        if (app()->isProduction()) {
+            $this->call(ProduccionSeeder::class);
+            return;
+        }
+
         // Superadmin de la plataforma (sin empresa)
         User::updateOrCreate(
             ['email' => 'superadmin@rrhh.test'],
