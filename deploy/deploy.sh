@@ -24,7 +24,7 @@ composer install --no-dev --optimize-autoloader --no-interaction
 
 $PHP artisan migrate --force
 
-$PHP artisan storage:link 2>/dev/null || true
+[ -L public/storage ] || $PHP artisan storage:link
 $PHP artisan optimize:clear
 $PHP artisan config:cache
 $PHP artisan route:cache
